@@ -1,4 +1,4 @@
-package net.pranjal.testagent.rag;
+package net.pranjal.testagent.domain.rag;
 
 public record Visited(String destination) {
 }
