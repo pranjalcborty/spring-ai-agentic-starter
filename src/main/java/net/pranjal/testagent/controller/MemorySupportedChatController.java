@@ -6,16 +6,16 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/memoryChat")
+@RequestMapping("/memory")
 public class MemorySupportedChatController {
 
-    public final ChatClient ollamaClient;
+    private final ChatClient ollamaClient;
 
     public MemorySupportedChatController(ChatClient ollamaChatClient) {
         this.ollamaClient = ollamaChatClient;
     }
 
-    @GetMapping("/")
+    @GetMapping("/v1")
     public Flux<String> memorySupportedChatV1(@RequestParam String question) {
         return ollamaClient
                 .prompt()
@@ -28,7 +28,7 @@ public class MemorySupportedChatController {
                 .content();
     }
 
-    @GetMapping("/{conversationId}")
+    @GetMapping("/v2/{conversationId}")
     public Flux<String> memorySupportedChatV2(@RequestParam String question, @PathVariable String conversationId) {
         return ollamaClient
                 .prompt()

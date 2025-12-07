@@ -1,0 +1,53 @@
+services:
+  ollama:
+    networks:
+      - agent
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/var/lib/.ollama
+      - ./entrypoint-setup/ollama-entrypoint.sh:/entrypoint.sh
+    entrypoint:
+      [ "/bin/bash", "/entrypoint.sh"]
+    restart: always
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+  cassandra:
+    networks:
+      - agent
+    image: cassandra:latest
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+
+  postgres:
+    networks:
+      - agent
+    image: pgvector/pgvector:pg17
+    container_name: pgvector
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./entrypoint-setup/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      POSTGRES_DB: vectordb
+      POSTGRES_USER: postgresu
+      POSTGRES_PASSWORD: postgresp
+
+volumes:
+  ollama:
+  pgdata:
+
+networks:
+  agent:
+    driver: bridge

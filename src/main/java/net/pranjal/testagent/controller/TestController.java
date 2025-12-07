@@ -4,13 +4,13 @@ import net.pranjal.testagent.domain.ChampionsLeague;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 @RestController
-@ResponseBody
+@RequestMapping("/assistant")
 public class TestController {
 
     private final ChatClient geminiChatClient;
@@ -23,7 +23,7 @@ public class TestController {
         this.ollamaChatClient = ollamaChatClient;
     }
 
-    @GetMapping("/geminiAssistant")
+    @GetMapping("/gemini")
     ChampionsLeague inquireGemini(@RequestParam String question) {
         return geminiChatClient
                 .prompt()
@@ -32,7 +32,7 @@ public class TestController {
                 .entity(ChampionsLeague.class);
     }
 
-    @GetMapping("/ollamaAssistant")
+    @GetMapping("/ollama")
     ChampionsLeague inquireOllama(@RequestParam String question) {
         return ollamaChatClient
                 .prompt()
@@ -41,7 +41,7 @@ public class TestController {
                 .entity(ChampionsLeague.class);
     }
 
-    @GetMapping("/assistant")
+    @GetMapping("/combined")
     Flux<String> assistant(@RequestParam String question) {
         Flux<String> geminiOutput = geminiChatClient
                 .prompt()

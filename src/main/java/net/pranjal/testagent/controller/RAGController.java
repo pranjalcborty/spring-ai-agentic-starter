@@ -22,24 +22,21 @@ import java.util.List;
 @RequestMapping("/rag")
 public class RAGController {
 
-    public final VectorStore vectorStore;
-    public final ChatClient geminiChatClient;
-    public final ChatClient ollamaChatClient;
+    private final VectorStore vectorStore;
+    private final ChatClient ollamaChatClient;
 
     @Value("classpath:/data/visited.json")
     Resource visitedPlacesJson;
 
-    public RAGController(ChatClient geminiChatClient,
-                         ChatClient ollamaChatClient,
+    public RAGController(ChatClient ollamaChatClient,
                          VectorStore vectorStore) {
 
         this.vectorStore = vectorStore;
-        this.geminiChatClient = geminiChatClient;
         this.ollamaChatClient = ollamaChatClient;
     }
 
-    @GetMapping("/visit")
-    public VisitedPlaces models(
+    @GetMapping("/visitedPlaces")
+    public VisitedPlaces visitedPlaces(
             @RequestParam(
                     value = "message",
                     defaultValue = "Give me all places I have visited.")
@@ -56,12 +53,8 @@ public class RAGController {
                 .entity(VisitedPlaces.class);
     }
 
-    @GetMapping("/pgvector")
-    public VisitedPlaces modelsPG(
-            @RequestParam(value = "message",
-                    defaultValue = "Give me all places I have visited.")
-            String message) {
-
+    @GetMapping("/chat")
+    public String chat(@RequestParam(value = "message") String message) {
         return ollamaChatClient
                 .prompt()
                 .advisors(advisorSpec ->
@@ -70,7 +63,7 @@ public class RAGController {
                                 ChatMemory.DEFAULT_CONVERSATION_ID))
                 .user(message)
                 .call()
-                .entity(VisitedPlaces.class);
+                .content();
     }
 
     @GetMapping("/pgload")
@@ -84,7 +77,7 @@ public class RAGController {
         return new ResponseEntity<>("Document loaded", HttpStatus.OK);
     }
 
-    @GetMapping("/pgload/read")
+    @GetMapping("/pgload/similarity")
     public List<Document> modelsPGloadRead() {
         return vectorStore.similaritySearch(
                 SearchRequest.builder()
