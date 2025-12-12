@@ -40,7 +40,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./entrypoint-setup/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     environment:
-      POSTGRES_DB: vectordb
+      POSTGRES_DB: blog
       POSTGRES_USER: postgresu
       POSTGRES_PASSWORD: postgresp
 

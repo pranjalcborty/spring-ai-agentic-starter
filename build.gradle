@@ -26,6 +26,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-cassandra'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
 }
 
 ext {
