@@ -1,7 +1,7 @@
 services:
   ollama:
     networks:
-      - agent
+      - agent-network
     image: ollama/ollama:latest
     container_name: ollama
     ports:
@@ -11,6 +11,12 @@ services:
       - ./entrypoint-setup/ollama-entrypoint.sh:/entrypoint.sh
     entrypoint:
       [ "/bin/bash", "/entrypoint.sh"]
+    healthcheck:
+      test: "bash -c 'cat < /dev/null > /dev/tcp/localhost/11434'"
+      start_period: 60s
+      interval: 10s
+      timeout: 10s
+      retries: 3
     restart: always
     tty: true
     deploy:
@@ -23,17 +29,31 @@ services:
                 - gpu
   cassandra:
     networks:
-      - agent
+      - agent-network
     image: cassandra:latest
     container_name: cassandra
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nodetool status | grep 'Datacenter'"]
+      start_period: 10s
+      interval: 20s
+      timeout: 10s
+      retries: 10
     ports:
       - "9042:9042"
+      - "9160:9160"
+      - "7199:7199"
 
   postgres:
     networks:
-      - agent
+      - agent-network
     image: pgvector/pgvector:pg17
-    container_name: pgvector
+    container_name: postgres
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "blog", "-U", "postgresu"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 3
     ports:
       - "5432:5432"
     volumes:
@@ -44,10 +64,58 @@ services:
       POSTGRES_USER: postgresu
       POSTGRES_PASSWORD: postgresp
 
+  prometheus:
+    networks:
+      - agent-network
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./entrypoint-setup/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    networks:
+      - agent-network
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  mcp-server:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    build: ./TestBlogMcp
+    container_name: mcp-server
+    restart: on-failure
+    networks:
+      - agent-network
+    ports:
+      - "8081:8081"
+
+  chat-client:
+    depends_on:
+      ollama:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    build: ./TestAgent
+    container_name: chat-client
+    restart: on-failure
+    networks:
+      - agent-network
+    ports:
+      - "8080:8080"
+
 volumes:
   ollama:
   pgdata:
 
 networks:
-  agent:
-    driver: bridge
+  agent-network:
