@@ -74,22 +74,52 @@ services:
     volumes:
       - ./entrypoint-setup/prometheus.yml:/etc/prometheus/prometheus.yml
 
+  tempo:
+    networks:
+      - agent-network
+    image: grafana/tempo:latest
+    container_name: tempo
+    command:
+      - -config.file=/etc/tempo.yaml
+    volumes:
+      - ./entrypoint-setup/tempo.yml:/etc/tempo.yaml:ro
+      - tempo:/var/tempo
+    ports:
+      - "3200:3100"
+      - "9411:9411"
+
+  loki:
+    image: grafana/loki:main
+    networks:
+      - agent-network
+    container_name: loki
+    command: [ "-config.file=/etc/loki/local-config.yml" ]
+    volumes:
+      - ./entrypoint-setup/loki.yml:/etc/loki/local-config.yml
+    ports:
+      - "3100:3100"
+
   grafana:
     networks:
       - agent-network
     image: grafana/grafana:latest
     container_name: grafana
-    depends_on:
-      - prometheus
     ports:
       - "3000:3000"
     restart: unless-stopped
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./entrypoint-setup/grafana:/etc/grafana/provisioning/datasources:ro
 
   mcp-server:
     depends_on:
       postgres:
         condition: service_healthy
-    build: ./TestBlogMcp
+    build: ./mcp-server
     container_name: mcp-server
     restart: on-failure
     networks:
@@ -105,7 +135,7 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    build: ./TestAgent
+    build: ./chat-client
     container_name: chat-client
     restart: on-failure
     networks:
@@ -116,6 +146,8 @@ services:
 volumes:
   ollama:
   pgdata:
+  grafana:
+  tempo:
 
 networks:
   agent-network:

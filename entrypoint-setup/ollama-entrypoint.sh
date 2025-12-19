@@ -5,7 +5,7 @@ pid=$!
 
 sleep 5
 
-models=("qwen3:8b" "mxbai-embed-large")
+models=("qwen3:4b" "mxbai-embed-large")
 for model in "${models[@]}"
 do
     echo "🔴 $model Loading..."

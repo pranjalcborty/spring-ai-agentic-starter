@@ -1,0 +1,31 @@
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/blocks
+
+overrides:
+  metrics_generator_processors:
+    - span-metrics
+    - service-graphs
+    - local-blocks
+
+metrics_generator:
+  storage:
+    path: /var/tempo/storage
+  traces_storage:
+    path: /var/tempo/traces_storage
+  processor:
+    span_metrics:
+    service_graphs:
+    local_blocks:
+      flush_to_storage: true
+      filter_server_spans: false
